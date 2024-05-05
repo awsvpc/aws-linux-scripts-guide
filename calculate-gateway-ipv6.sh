@@ -108,6 +108,20 @@ calculate_gateway_ip "$subnet_cidr"
 
 calculate_gateway_ip() {
     local subnet_cidr=$1
+    local network=$(echo "$subnet_cidr" | cut -d/ -f1)
+    local last_group_dec=$((16#$(echo "$network" | awk -F: '{print $(NF)}') + 1))
+    local gateway=$(echo "$network" | sed "s/::[^:]*$/::$(printf "%x" $last_group_dec)/")
+    echo "Gateway IP Address: ${gateway}"
+}
+
+read -p "Enter the subnet CIDR (e.g.,): " subnet_cidr
+calculate_gateway_ip "$subnet_cidr"
+
+
+#!/bin/bash
+
+calculate_gateway_ip() {
+    local subnet_cidr=$1
     local subnet=${subnet_cidr%/*}
     local last_group_dec=$((16#$(echo $subnet | awk -F: '{print $(NF-1)}') + 1))
     local gateway=$(echo $subnet | sed "s/::.*:/::$(printf "%x" $last_group_dec):/")
