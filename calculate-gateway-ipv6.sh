@@ -149,3 +149,20 @@ calculate_gateway_ip() {
 read -p "Enter the subnet CIDR (e.g., ): " subnet_cidr
 calculate_gateway_ip "$subnet_cidr"
 >>>>>>>>>>>>>>>>>>>>
+
+#!/bin/bash
+
+# Get the CIDR notation from user input
+read -p "Enter the CIDR notation (e.g.,): " cidr
+
+# Extract the network address and prefix length from the CIDR notation
+network=$(echo $cidr | cut -d '/' -f 1)
+prefix_length=$(echo $cidr | cut -d '/' -f 2)
+
+# Calculate the network address with /64 prefix length
+network_with_64_prefix=$(printf "%s/%s" ${network%:*} $prefix_length)
+
+# Use the ip command to find the gateway for the network
+gateway=$(ip -6 route show | grep $network_with_64_prefix | awk '{print $3}')
+
+echo "Gateway for $cidr is $gateway"
