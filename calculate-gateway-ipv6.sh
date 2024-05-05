@@ -166,3 +166,85 @@ network_with_64_prefix=$(printf "%s/%s" ${network%:*} $prefix_length)
 gateway=$(ip -6 route show | grep $network_with_64_prefix | awk '{print $3}')
 
 echo "Gateway for $cidr is $gateway"
+
+
+>>>>>>>>>>>>>>>.
+
+#!/bin/bash
+
+# Function to calculate the IPv6 gateway
+calculate_ipv6_gateway() {
+  cidr="$1"
+
+  # Check if valid IPv6 CIDR using cut and grep
+  if ! echo "$cidr" | grep -E '^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}(\/[0-9]{1,3})?$' >/dev/null 2>&1; then
+    echo "Invalid IPv6 CIDR notation provided."
+    return 1
+  fi
+
+  # Extract IP address and prefix length
+  ip_address="${cidr%%/*}"
+  prefix_length="${cidr##*/}"
+
+  # Convert prefix length to bit length for calculation
+  bits=$((128 - prefix_length))
+
+  # Set the last bit of the network address to 1 for the gateway (using shift)
+  gateway=$((0x$(echo "$ip_address" | tr ':' ' ' | awk '{ sum += $1; printf("%04x", sum) }') << (bits - 1)))
+
+  # Combine modified address part with original prefix
+  gateway_address="${ip_address%%:*}:$((gateway >> 16))"
+  for ((i=1; i<7; ++i)); do
+    gateway_address="$gateway_address:${((gateway >> (16 * i) & 0xFFFF))}"
+  done
+  gateway_address="$gateway_address:${gateway & 0xFFFF}"
+
+  echo "$gateway_address/$prefix_length"
+}
+
+# Get CIDR input from user
+read -p "Enter IPv6 CIDR notation (e.g.): " cidr
+
+# Calculate and display gateway
+gateway=$(calculate_ipv6_gateway "$cidr")
+if [[ $? -eq 0 ]]; then
+  echo "IPv6 Gateway: $gateway"
+fi
+
+>>>>>>>>>>>>>>>>>>>>.
+
+#!/bin/bash
+
+# Function to calculate the IPv6 gateway
+calculate_ipv6_gateway() {
+  cidr="$1"
+
+  # Validate CIDR format and extract address/prefix using grep
+  if ! echo "$cidr" | grep -E '^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}(\/[0-9]{1,3})?$' >/dev/null 2>&1; then
+    echo "Invalid IPv6 CIDR notation provided."
+    return 1
+  fi
+  ip_address="${cidr%%/*}"
+  prefix_length="${cidr##*/}"
+
+  # Calculate bit position and set last bit for gateway (using arithmetic expansion)
+  gateway=$(( 0x$(echo "$ip_address" | tr ':' ' ' | awk '{ sum += $1; printf("%04x", sum) }') | (1<< (128-$prefix_length-1)) ))
+
+  # Build gateway address with modified last octet and original prefix
+  gateway_address="${ip_address%%:*}:$((gateway >> 16))"
+  for ((i=1; i<7; ++i)); do
+    gateway_address="$gateway_address:${((gateway >> (16 * i) & 0xFFFF))}"
+  done
+  gateway_address="$gateway_address:${gateway & 0xFFFF}"
+
+  echo "$gateway_address/$prefix_length"
+}
+
+# Get CIDR input from user
+read -p "Enter IPv6 CIDR notation (e.g., ): " cidr
+
+# Calculate and display gateway
+gateway=$(calculate_ipv6_gateway "$cidr")
+if [[ $? -eq 0 ]]; then
+  echo "IPv6 Gateway: $gateway"
+fi
