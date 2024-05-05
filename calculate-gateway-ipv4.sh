@@ -52,3 +52,25 @@ fi
 # Calculate and display the gateway IP address
 calculate_gateway_ip "$subnet_cidr"
 
+>>>>>>>>>>>>>>>>>>>>.
+
+#!/bin/bash
+
+# Function to calculate the gateway IP address
+calculate_gateway_ip() {
+    local subnet_cidr=$1
+    local subnet=${subnet_cidr%/*}
+    local cidr=${subnet_cidr#*/}
+    
+    local first_three_octets=$(echo $subnet | cut -d. -f1-3)
+    local last_octet=$(echo $subnet | cut -d. -f4)
+    local gateway=$((last_octet + 1))
+    
+    echo "Gateway IP Address: ${first_three_octets}.${gateway}"
+}
+
+# Main script
+read -p "Enter the subnet CIDR (e.g., 10.10.10.192/27): " subnet_cidr
+
+# Calculate and display the gateway IP address
+calculate_gateway_ip "$subnet_cidr"
