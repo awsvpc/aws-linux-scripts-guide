@@ -131,3 +131,21 @@ calculate_gateway_ip() {
 read -p "Enter the subnet CIDR (e.g.,): " subnet_cidr
 calculate_gateway_ip "$subnet_cidr"
 
+>>>>>>>>>>>>>
+
+#!/bin/bash
+
+calculate_gateway_ip() {
+    local subnet_cidr=$1
+    local network=$(echo "$subnet_cidr" | cut -d/ -f1)
+    local last_group_hex=$(echo "$network" | awk -F: '{print $NF}')
+    local last_group_dec=$((16#${last_group_hex}))
+    local next_group_dec=$((last_group_dec + 1))
+    local next_group_hex=$(printf "%x" "$next_group_dec")
+    local gateway=$(echo "$network" | sed "s/$last_group_hex$/$next_group_hex/")
+    echo "Gateway IP Address: ${gateway}"
+}
+
+read -p "Enter the subnet CIDR (e.g., ): " subnet_cidr
+calculate_gateway_ip "$subnet_cidr"
+>>>>>>>>>>>>>>>>>>>>
